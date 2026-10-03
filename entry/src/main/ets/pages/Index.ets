@@ -146,8 +146,9 @@ struct Index {
     .focusable(true)
     .defaultFocus(true)
     .onKeyEvent((event: KeyEvent) => {
-      // In OpenHarmony, keyCode 16 is Volume Up, 17 is Volume Down
-      if (event.type === KeyType.Down && (event.keyCode === 16 || event.keyCode === 17)) {
+      // HACKATHON TRICK: Emulators often let the OS swallow Volume keys (so it just changes the volume).
+      // By removing the specific keyCode check, ANY physical keyboard press will trigger it.
+      if (event.type === KeyType.Down) {
         this.triggerContextAnalysis();
       }
     })
