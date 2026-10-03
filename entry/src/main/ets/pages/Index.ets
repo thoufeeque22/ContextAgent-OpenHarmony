@@ -146,13 +146,21 @@ struct Index {
     .focusable(true)
     .defaultFocus(true)
     .onKeyEvent((event: KeyEvent) => {
-      // HACKATHON TRICK: Emulators often let the OS swallow Volume keys (so it just changes the volume).
-      // By removing the specific keyCode check, ANY physical keyboard press will trigger it.
       if (event.type === KeyType.Down) {
-        this.triggerContextAnalysis();
+        // HACKATHON TRICK: Sequential feature toggling.
+        // First key press triggers Context, next triggers Document. 
+        if (this.lastTriggeredFeature === 2) {
+          this.triggerContextAnalysis();
+          this.lastTriggeredFeature = 1;
+        } else {
+          this.triggerDocumentAnalysis();
+          this.lastTriggeredFeature = 2;
+        }
       }
     })
   }
+
+  private lastTriggeredFeature: number = 2;
 
   private triggerDocumentAnalysis() {
     if (this.documentState !== 'idle') return;
