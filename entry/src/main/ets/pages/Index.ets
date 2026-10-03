@@ -11,9 +11,12 @@ struct Index {
   ];
   @State isProcessingContext: boolean = false;
   @State documentState: 'idle' | 'scanning' | 'analyzing' = 'idle';
+  @State screenState: 'idle' | 'scanning' | 'analyzing' = 'idle';
   
   // Platform context data
   @State ambientLightLevel: number = 0;
+  @State gravityY: number = -9.8;
+  @State gravityZ: number = 0;
 
   aboutToAppear() {
     // Register native sensor listener to continuously monitor ambient light
@@ -24,13 +27,24 @@ struct Index {
     } catch (error) {
       console.error("Failed to initialize AMBIENT_LIGHT sensor: " + error);
     }
+    
+    // Register native accelerometer for spatial posture
+    try {
+      sensor.on(sensor.SensorId.ACCELEROMETER, (data) => {
+        this.gravityY = data.y;
+        this.gravityZ = data.z;
+      }, { interval: 200000000 });
+    } catch (error) {
+      console.error("Failed to initialize ACCELEROMETER sensor: " + error);
+    }
   }
 
   aboutToDisappear() {
     try {
       sensor.off(sensor.SensorId.AMBIENT_LIGHT);
+      sensor.off(sensor.SensorId.ACCELEROMETER);
     } catch (error) {
-      console.error("Failed to turn off AMBIENT_LIGHT sensor: " + error);
+      console.error("Failed to turn off sensors: " + error);
     }
   }
 
@@ -62,33 +76,48 @@ struct Index {
       .backgroundColor('#110527')
 
       // Main Action Buttons
-      Column({ space: 16 }) {
+      Column({ space: 12 }) {
         Button() {
           Text(this.isProcessingContext ? "Analyzing..." : "What's Around Me?")
-            .fontSize(24)
+            .fontSize(22)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
         }
         .type(ButtonType.Capsule)
         .width('100%')
-        .height(100)
+        .height(80)
         .backgroundColor(this.isProcessingContext ? '#8C64B4' : '#E6007E')
-        .shadow({ radius: 10, color: '#E6007E', offsetX: 0, offsetY: 5 })
+        .shadow({ radius: 8, color: '#E6007E', offsetX: 0, offsetY: 4 })
         .onClick(() => {
           this.triggerContextAnalysis();
         })
 
         Button() {
-          Text(this.documentState === 'idle' ? "Read Private Document" : (this.documentState === 'scanning' ? "Scanning..." : "Analyzing..."))
-            .fontSize(24)
+          Text(this.screenState === 'idle' ? "Summarize Screen" : (this.screenState === 'scanning' ? "Reading UI..." : "Analyzing..."))
+            .fontSize(22)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
         }
         .type(ButtonType.Capsule)
         .width('100%')
-        .height(100)
+        .height(80)
+        .backgroundColor(this.screenState !== 'idle' ? '#8C64B4' : '#FF9900')
+        .shadow({ radius: 8, color: '#FF9900', offsetX: 0, offsetY: 4 })
+        .onClick(() => {
+          this.triggerScreenAnalysis();
+        })
+
+        Button() {
+          Text(this.documentState === 'idle' ? "Read Private Document" : (this.documentState === 'scanning' ? "Scanning..." : "Analyzing..."))
+            .fontSize(22)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor('#FFFFFF')
+        }
+        .type(ButtonType.Capsule)
+        .width('100%')
+        .height(80)
         .backgroundColor(this.documentState !== 'idle' ? '#8C64B4' : '#02BCC1')
-        .shadow({ radius: 10, color: '#02BCC1', offsetX: 0, offsetY: 5 })
+        .shadow({ radius: 8, color: '#02BCC1', offsetX: 0, offsetY: 4 })
         .onClick(() => {
           this.triggerDocumentAnalysis();
         })
@@ -101,7 +130,7 @@ struct Index {
 
       // Environmental Data Debug (For Judges)
       Row() {
-        Text("Lux (Ambient Light): " + Math.round(this.ambientLightLevel))
+        Text("Lux: " + Math.round(this.ambientLightLevel) + " | Pos: " + Math.round(this.gravityY))
           .fontSize(14)
           .fontColor('#02BCC1')
       }
@@ -147,34 +176,45 @@ struct Index {
     .defaultFocus(true)
     .onKeyEvent((event: KeyEvent) => {
       if (event.type === KeyType.Down) {
-        // HACKATHON TRICK: Sequential feature toggling.
-        // First key press triggers Context, next triggers Document. 
-        if (this.lastTriggeredFeature === 2) {
+        // Sequential feature toggling: 1 -> 2 -> 3
+        if (this.lastTriggeredFeature === 3) {
           this.triggerContextAnalysis();
           this.lastTriggeredFeature = 1;
+        } else if (this.lastTriggeredFeature === 1) {
+          this.triggerScreenAnalysis();
+          this.lastTriggeredFeature = 2;
         } else {
           this.triggerDocumentAnalysis();
-          this.lastTriggeredFeature = 2;
+          this.lastTriggeredFeature = 3;
         }
       }
     })
   }
 
-  private lastTriggeredFeature: number = 2;
+  private lastTriggeredFeature: number = 3;
 
   private triggerDocumentAnalysis() {
     if (this.documentState !== 'idle') return;
     this.documentState = 'scanning';
 
-    // Simulate 1.5 seconds of "Scanning" (Local OCR extraction) before Analyzing
     setTimeout(() => {
       this.documentState = 'analyzing';
-      
       let simulatedOCRText = "CONFIDENTIAL MEDICAL BILL. Patient: Jan Kowalski. Amount Due: 450.00 PLN. Due Date: October 15th.";
       let systemPrompt = `You are a helpful AI accessibility assistant running completely offline. The user just scanned a private document with their camera. The extracted text is: "${simulatedOCRText}". Provide a warm, concise, one-sentence auditory summary of this document for a visually impaired user. Do not leak privacy warnings, just summarize the bill.`;
-
       this.sendToGemma(systemPrompt, 'document');
     }, 1500);
+  }
+
+  private triggerScreenAnalysis() {
+    if (this.screenState !== 'idle') return;
+    this.screenState = 'scanning';
+
+    setTimeout(() => {
+      this.screenState = 'analyzing';
+      let simulatedScreenTree = "APP: mBank. PAGE: Dashboard. ELEMENT 1: Text 'Welcome Jan'. ELEMENT 2: Text 'Current Balance: 12,450.00 PLN'. ELEMENT 3: Button 'Transfer'.";
+      let systemPrompt = `You are an AI accessibility screen reader. The user is on their phone. The raw UI tree is: "${simulatedScreenTree}". Provide a natural, conversational one-sentence summary of what is on their screen so they don't have to listen to a robotic line-by-line reading.`;
+      this.sendToGemma(systemPrompt, 'screen');
+    }, 1000);
   }
 
   private triggerContextAnalysis() {
@@ -188,17 +228,25 @@ struct Index {
        environmentDescriptor = "dimly lit";
     }
 
+    let orientation = "held upright";
+    if (this.gravityY > 5) {
+      orientation = "held UPSIDE DOWN";
+    } else if (this.gravityZ > 5) {
+      orientation = "lying flat on a table (face up)";
+    } else if (this.gravityZ < -5) {
+      orientation = "lying flat on a table (face down)";
+    }
+
     let deviceType = deviceInfo.deviceType ? deviceInfo.deviceType : "smart device";
     
-    let systemPrompt = `You are a helpful AI accessibility assistant. The user is visually impaired and holding a ${deviceType}. The device's physical sensors detect that the current environment is ${environmentDescriptor} (${Math.round(this.ambientLightLevel)} lux). Provide a warm, concise, one-sentence auditory description reassuring the user of their environment.`;
+    let systemPrompt = `You are a helpful AI accessibility assistant. The user is visually impaired and holding a ${deviceType}. The device's physical sensors detect that the current environment is ${environmentDescriptor} (${Math.round(this.ambientLightLevel)} lux). Furthermore, the spatial accelerometer detects the phone is ${orientation}. Provide a warm, concise, one-sentence auditory description reassuring the user of their environment, and warn them if the phone is upside down.`;
 
     this.sendToGemma(systemPrompt, 'context');
   }
 
-  private sendToGemma(systemPrompt: string, source: 'context' | 'document') {
+  private sendToGemma(systemPrompt: string, source: 'context' | 'document' | 'screen') {
     let httpRequest = http.createHttp();
     // Use 10.0.2.2 because it is the emulator's alias for the Mac's localhost
-    // NOTE: If using the Previewer instead of the Emulator, this should be 127.0.0.1
     let url = "http://10.0.2.2:11434/api/generate";
     
     httpRequest.request(
@@ -217,6 +265,8 @@ struct Index {
       (err, data) => {
         if (source === 'context') {
           this.isProcessingContext = false;
+        } else if (source === 'screen') {
+          this.screenState = 'idle';
         } else {
           this.documentState = 'idle';
         }
@@ -231,7 +281,6 @@ struct Index {
               this.recentSummaries.pop();
             }
             
-            // Auditory Feedback Trigger
             promptAction.showToast({
               message: 'Speaking: ' + responseText,
               duration: 3000
