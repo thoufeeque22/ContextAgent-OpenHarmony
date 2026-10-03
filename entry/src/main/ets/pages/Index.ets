@@ -194,11 +194,11 @@ struct Index {
         // Map the physical '1', '2', and '3' keys to specific features using raw KeyCodes!
         // We check OpenHarmony, Android, and ASCII codes just to be absolutely certain.
         let code = event.keyCode;
-        if (code === 2000 || code === 8 || code === 49) {
+        if (code === 2001 || code === 8 || code === 49) {
           this.triggerContextAnalysis();
-        } else if (code === 2001 || code === 9 || code === 50) {
+        } else if (code === 2002 || code === 9 || code === 50) {
           this.triggerScreenAnalysis();
-        } else if (code === 2002 || code === 10 || code === 51) {
+        } else if (code === 2003 || code === 10 || code === 51) {
           this.triggerDocumentAnalysis();
         }
       }
