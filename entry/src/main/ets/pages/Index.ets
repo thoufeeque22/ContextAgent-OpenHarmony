@@ -12,10 +12,11 @@ struct Index {
   @State isProcessingContext: boolean = false;
   @State documentState: 'idle' | 'scanning' | 'analyzing' = 'idle';
   @State screenState: 'idle' | 'scanning' | 'analyzing' = 'idle';
+  @State actionState: 'idle' | 'scanning' | 'analyzing' = 'idle';
   
   // Platform context data
   @State ambientLightLevel: number = 0;
-  @State gravityY: number = -9.8;
+  @State @Watch('onGravityChange') gravityY: number = -9.8;
   @State gravityZ: number = 0;
 
   aboutToAppear() {
@@ -76,16 +77,16 @@ struct Index {
       .backgroundColor('#110527')
 
       // Main Action Buttons
-      Column({ space: 12 }) {
+      Column({ space: 10 }) {
         Button() {
           Text(this.isProcessingContext ? "Analyzing..." : "What's Around Me?")
-            .fontSize(22)
+            .fontSize(20)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
         }
         .type(ButtonType.Capsule)
         .width('100%')
-        .height(80)
+        .height(70)
         .backgroundColor(this.isProcessingContext ? '#8C64B4' : '#E6007E')
         .shadow({ radius: 8, color: '#E6007E', offsetX: 0, offsetY: 4 })
         .onClick(() => {
@@ -94,13 +95,13 @@ struct Index {
 
         Button() {
           Text(this.screenState === 'idle' ? "Summarize Screen" : (this.screenState === 'scanning' ? "Reading UI..." : "Analyzing..."))
-            .fontSize(22)
+            .fontSize(20)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
         }
         .type(ButtonType.Capsule)
         .width('100%')
-        .height(80)
+        .height(70)
         .backgroundColor(this.screenState !== 'idle' ? '#8C64B4' : '#FF9900')
         .shadow({ radius: 8, color: '#FF9900', offsetX: 0, offsetY: 4 })
         .onClick(() => {
@@ -109,22 +110,36 @@ struct Index {
 
         Button() {
           Text(this.documentState === 'idle' ? "Read Private Document" : (this.documentState === 'scanning' ? "Scanning..." : "Analyzing..."))
-            .fontSize(22)
+            .fontSize(20)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
         }
         .type(ButtonType.Capsule)
         .width('100%')
-        .height(80)
+        .height(70)
         .backgroundColor(this.documentState !== 'idle' ? '#8C64B4' : '#02BCC1')
         .shadow({ radius: 8, color: '#02BCC1', offsetX: 0, offsetY: 4 })
         .onClick(() => {
           this.triggerDocumentAnalysis();
         })
+
+        Button() {
+          Text(this.actionState === 'idle' ? "Execute Action" : (this.actionState === 'scanning' ? "Planning..." : "Executing..."))
+            .fontSize(20)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor('#FFFFFF')
+        }
+        .type(ButtonType.Capsule)
+        .width('100%')
+        .height(70)
+        .backgroundColor(this.actionState !== 'idle' ? '#8C64B4' : '#32CD32')
+        .shadow({ radius: 8, color: '#32CD32', offsetX: 0, offsetY: 4 })
+        .onClick(() => {
+          this.triggerActionExecution();
+        })
       }
       .width('100%')
       .padding({ left: 24, right: 24, top: 12, bottom: 12 })
-      .layoutWeight(1)
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
 
@@ -200,9 +215,56 @@ struct Index {
           this.triggerScreenAnalysis();
         } else if (code === 2003 || code === 10 || code === 51) {
           this.triggerDocumentAnalysis();
+        } else if (code === 2004 || code === 11 || code === 52) {
+          this.triggerActionExecution();
         }
       }
     })
+  }
+  onGravityChange() {
+    // If the phone flips upside down, automatically trigger the context analysis
+    if (this.gravityY > 5 && !this.isProcessingContext) {
+      this.triggerContextAnalysis();
+    }
+  }
+
+  private actionPhase: number = 0;
+
+  private triggerActionExecution() {
+    if (this.actionState !== 'idle') return;
+    
+    if (this.actionPhase === 0) {
+      // Step 1: User asks to open app
+      this.recentSummaries.unshift("User (Voice): Open Bank Pekao app.");
+      this.actionState = 'scanning';
+      setTimeout(() => {
+        this.recentSummaries.unshift("System: I have opened the Bank Pekao application for you.");
+        this.actionPhase = 1;
+        this.actionState = 'idle';
+      }, 1000);
+      
+      } else if (this.actionPhase === 1) {
+      // Step 2: User asks to pay bill, Gemma evaluates screen
+      this.recentSummaries.unshift("User (Voice): Pay my medical bill.");
+      this.actionState = 'scanning';
+      setTimeout(() => {
+        this.actionState = 'analyzing';
+        let simulatedScreenTree = "APP: Bank Pekao. PAGE: Dashboard. ELEMENT 1: Text 'Welcome Jan'. ELEMENT 2: Text 'Current Balance: 12,450.00 PLN'. ELEMENT 3: Button 'Transfer'.";
+        let systemPrompt = `You are an autonomous AI agent with system-level UI access. The user is on their phone. The raw UI tree is: "${simulatedScreenTree}". The user requested to "pay my medical bill". Output exactly one very short sentence (maximum 15 words) stating that YOU will click the Bank Pekao 'Transfer' button for them, and asking the user to say "Confirm" to finalize the 450 PLN payment. Do not include any filler text.`;
+        this.sendToGemma(systemPrompt, 'action');
+        this.actionPhase = 2;
+      }, 1000);
+      
+    } else if (this.actionPhase === 2) {
+      // Step 3: User confirms, action completes
+      this.recentSummaries.unshift("User (Voice): Confirm.");
+      this.actionState = 'scanning';
+      setTimeout(() => {
+        this.recentSummaries.unshift("System: Action Executed! 450.00 PLN has been successfully transferred.");
+        this.actionPhase = 0; // Reset demo loop
+        this.actionState = 'idle';
+      }, 1000);
+    }
   }
 
   private triggerDocumentAnalysis() {
@@ -223,7 +285,7 @@ struct Index {
 
     setTimeout(() => {
       this.screenState = 'analyzing';
-      let simulatedScreenTree = "APP: mBank. PAGE: Dashboard. ELEMENT 1: Text 'Welcome Jan'. ELEMENT 2: Text 'Current Balance: 12,450.00 PLN'. ELEMENT 3: Button 'Transfer'.";
+      let simulatedScreenTree = "APP: Bank Pekao. PAGE: Dashboard. ELEMENT 1: Text 'Welcome Jan'. ELEMENT 2: Text 'Current Balance: 12,450.00 PLN'. ELEMENT 3: Button 'Transfer'.";
       let systemPrompt = `You are an AI accessibility screen reader. The user is on their phone. The raw UI tree is: "${simulatedScreenTree}". Provide a natural, conversational one-sentence summary of what is on their screen so they don't have to listen to a robotic line-by-line reading.`;
       this.sendToGemma(systemPrompt, 'screen');
     }, 1000);
@@ -258,9 +320,8 @@ struct Index {
     this.sendToGemma(systemPrompt, 'context');
   }
 
-  private sendToGemma(systemPrompt: string, source: 'context' | 'document' | 'screen') {
+  private sendToGemma(systemPrompt: string, source: 'context' | 'document' | 'screen' | 'action') {
     let httpRequest = http.createHttp();
-    // Use 10.0.2.2 because it is the emulator's alias for the Mac's localhost
     let url = "http://10.0.2.2:11434/api/generate";
     
     httpRequest.request(
@@ -281,6 +342,8 @@ struct Index {
           this.isProcessingContext = false;
         } else if (source === 'screen') {
           this.screenState = 'idle';
+        } else if (source === 'action') {
+          this.actionState = 'idle';
         } else {
           this.documentState = 'idle';
         }
@@ -290,7 +353,7 @@ struct Index {
             let res = JSON.parse(data.result as string) as Record<string, Object>;
             let responseText = res['response'] as string;
             
-            this.recentSummaries.unshift(responseText);
+            this.recentSummaries.unshift("System: " + responseText);
             if (this.recentSummaries.length > 5) {
               this.recentSummaries.pop();
             }
@@ -300,10 +363,10 @@ struct Index {
               duration: 3000
             });
           } catch (e) {
-            this.recentSummaries.unshift("AI Parse Error: Unable to read Gemma 4 output.");
+            this.recentSummaries.unshift("System: AI Parse Error.");
           }
         } else {
-          this.recentSummaries.unshift(`Network Error: Ensure Ollama is running on Mac.`);
+          this.recentSummaries.unshift(`System: Network Error. Ensure Ollama is running.`);
         }
       }
     );
