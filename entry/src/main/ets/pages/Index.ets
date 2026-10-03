@@ -143,6 +143,14 @@ struct Index {
     .width('100%')
     .height('100%')
     .backgroundColor('#020205')
+    .focusable(true)
+    .defaultFocus(true)
+    .onKeyEvent((event: KeyEvent) => {
+      // In OpenHarmony, keyCode 16 is Volume Up, 17 is Volume Down
+      if (event.type === KeyType.Down && (event.keyCode === 16 || event.keyCode === 17)) {
+        this.triggerContextAnalysis();
+      }
+    })
   }
 
   private triggerDocumentAnalysis() {
