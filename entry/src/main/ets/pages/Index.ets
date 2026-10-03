@@ -241,8 +241,10 @@ struct Index {
     }
 
     let orientation = "held upright";
+    let orientationWarning = "";
     if (this.gravityY > 5) {
       orientation = "held UPSIDE DOWN";
+      orientationWarning = "CRITICAL: Explicitly warn the user that they are holding their phone upside down.";
     } else if (this.gravityZ > 5) {
       orientation = "lying flat on a table (face up)";
     } else if (this.gravityZ < -5) {
@@ -251,7 +253,7 @@ struct Index {
 
     let deviceType = deviceInfo.deviceType ? deviceInfo.deviceType : "smart device";
     
-    let systemPrompt = `You are a helpful AI accessibility assistant. The user is visually impaired and holding a ${deviceType}. The device's physical sensors detect that the current environment is ${environmentDescriptor} (${Math.round(this.ambientLightLevel)} lux). Furthermore, the spatial accelerometer detects the phone is ${orientation}. Provide a warm, concise, one-sentence auditory description reassuring the user of their environment, and warn them if the phone is upside down.`;
+    let systemPrompt = `You are a helpful AI accessibility assistant. The user is visually impaired and holding a ${deviceType}. The device's physical sensors detect that the current environment is ${environmentDescriptor} (${Math.round(this.ambientLightLevel)} lux). Furthermore, the spatial accelerometer detects the phone is ${orientation}. Provide a warm, concise, one-sentence auditory description reassuring the user of their environment. ${orientationWarning}`;
 
     this.sendToGemma(systemPrompt, 'context');
   }
