@@ -181,8 +181,7 @@ struct Index {
     .onKeyEvent((event: KeyEvent) => {
       if (event.type === KeyType.Down) {
         
-        // HACKATHON TRICK 2: The emulator doesn't mock Accelerometer on rotation.
-        // Secret keys to manually flip the gravity vector for the demo!
+        // HACKATHON TRICK 2: Secret keys to manually flip the gravity vector
         if (event.keyText === 'u' || event.keyText === 'U') {
           this.gravityY = 10; // Mock upside down
           return;
@@ -192,22 +191,17 @@ struct Index {
           return;
         }
 
-        // Sequential feature toggling: 1 -> 2 -> 3
-        if (this.lastTriggeredFeature === 3) {
+        // Map the physical '1', '2', and '3' keys to specific features!
+        if (event.keyText === '1') {
           this.triggerContextAnalysis();
-          this.lastTriggeredFeature = 1;
-        } else if (this.lastTriggeredFeature === 1) {
+        } else if (event.keyText === '2') {
           this.triggerScreenAnalysis();
-          this.lastTriggeredFeature = 2;
-        } else {
+        } else if (event.keyText === '3') {
           this.triggerDocumentAnalysis();
-          this.lastTriggeredFeature = 3;
         }
       }
     })
   }
-
-  private lastTriggeredFeature: number = 3;
 
   private triggerDocumentAnalysis() {
     if (this.documentState !== 'idle') return;
