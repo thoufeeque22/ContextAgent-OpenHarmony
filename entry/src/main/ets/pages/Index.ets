@@ -170,7 +170,7 @@ struct Index {
     setTimeout(() => {
       this.documentState = 'analyzing';
       
-      let simulatedOCRText = "CONFIDENTIAL MEDICAL BILL. Patient: John Doe. Amount Due: $450.00. Due Date: October 15th.";
+      let simulatedOCRText = "CONFIDENTIAL MEDICAL BILL. Patient: Jan Kowalski. Amount Due: 450.00 PLN. Due Date: October 15th.";
       let systemPrompt = `You are a helpful AI accessibility assistant running completely offline. The user just scanned a private document with their camera. The extracted text is: "${simulatedOCRText}". Provide a warm, concise, one-sentence auditory summary of this document for a visually impaired user. Do not leak privacy warnings, just summarize the bill.`;
 
       this.sendToGemma(systemPrompt, 'document');
