@@ -357,11 +357,6 @@ struct Index {
             if (this.recentSummaries.length > 5) {
               this.recentSummaries.pop();
             }
-            
-            promptAction.showToast({
-              message: 'Speaking: ' + responseText,
-              duration: 3000
-            });
           } catch (e) {
             this.recentSummaries.unshift("System: AI Parse Error.");
           }
