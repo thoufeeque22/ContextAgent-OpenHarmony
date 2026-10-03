@@ -1,6 +1,7 @@
 import { promptAction } from '@kit.ArkUI';
 import sensor from '@ohos.sensor';
 import deviceInfo from '@ohos.deviceInfo';
+import http from '@ohos.net.http';
 
 @Entry
 @Component
@@ -106,8 +107,8 @@ struct Index {
                   .fontSize(16)
                   .fontColor('#FFFFFF')
                   .padding(16)
+                  .layoutWeight(1)
               }
-              .width('100%')
               .backgroundColor('#2A1A4A')
               .borderRadius(12)
               .margin({ left: 24, right: 24 })
@@ -130,30 +131,60 @@ struct Index {
     if (this.isProcessing) return;
     this.isProcessing = true;
 
-    // Simulate inference delay
-    setTimeout(() => {
-      this.isProcessing = false;
-      
-      // We construct a dynamic summary using the native OpenHarmony sensor data
-      let environmentDescriptor = "well-lit";
-      if (this.ambientLightLevel < 50) {
-         environmentDescriptor = "very dark";
-      } else if (this.ambientLightLevel < 200) {
-         environmentDescriptor = "dimly lit";
+    let environmentDescriptor = "well-lit";
+    if (this.ambientLightLevel < 50) {
+       environmentDescriptor = "very dark";
+    } else if (this.ambientLightLevel < 200) {
+       environmentDescriptor = "dimly lit";
+    }
+
+    let deviceType = deviceInfo.deviceType ? deviceInfo.deviceType : "smart device";
+    
+    // Construct the prompt for Gemma 4
+    let systemPrompt = `You are a helpful AI accessibility assistant. The user is visually impaired and holding a ${deviceType}. The device's physical sensors detect that the current environment is ${environmentDescriptor} (${Math.round(this.ambientLightLevel)} lux). Provide a warm, concise, one-sentence auditory description reassuring the user of their environment.`;
+
+    let httpRequest = http.createHttp();
+    // Use 10.0.2.2 because it is the emulator's alias for the Mac's localhost
+    // NOTE: If using the Previewer instead of the Emulator, this should be 127.0.0.1
+    let url = "http://10.0.2.2:11434/api/generate";
+    
+    httpRequest.request(
+      url,
+      {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/json' },
+        extraData: JSON.stringify({
+          model: "gemma4:latest",
+          prompt: systemPrompt,
+          stream: false
+        }),
+        readTimeout: 30000,
+        connectTimeout: 30000
+      },
+      (err, data) => {
+        this.isProcessing = false;
+        if (!err && data.responseCode === 200) {
+          try {
+            let res = JSON.parse(data.result as string) as Record<string, Object>;
+            let responseText = res['response'] as string;
+            
+            this.recentSummaries.unshift(responseText);
+            if (this.recentSummaries.length > 5) {
+              this.recentSummaries.pop();
+            }
+            
+            // Auditory Feedback Trigger
+            promptAction.showToast({
+              message: 'Speaking: ' + responseText,
+              duration: 3000
+            });
+          } catch (e) {
+            this.recentSummaries.unshift("AI Parse Error: Unable to read Gemma 4 output.");
+          }
+        } else {
+          this.recentSummaries.unshift(`Network Error: Ensure Ollama is running on Mac.`);
+        }
       }
-
-      let newSummary = `I detect you are in a ${environmentDescriptor} environment (Light Level: ${Math.round(this.ambientLightLevel)} lux) holding a ${deviceInfo.deviceType}.`;
-
-      this.recentSummaries.unshift(newSummary);
-      if (this.recentSummaries.length > 5) {
-        this.recentSummaries.pop();
-      }
-
-      // Auditory Feedback Trigger
-      promptAction.showToast({
-        message: 'Speaking Context...',
-        duration: 3000
-      });
-    }, 1500);
+    );
   }
 }
