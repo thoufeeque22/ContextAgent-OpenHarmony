@@ -176,6 +176,18 @@ struct Index {
     .defaultFocus(true)
     .onKeyEvent((event: KeyEvent) => {
       if (event.type === KeyType.Down) {
+        
+        // HACKATHON TRICK 2: The emulator doesn't mock Accelerometer on rotation.
+        // Secret keys to manually flip the gravity vector for the demo!
+        if (event.keyText === 'u' || event.keyText === 'U') {
+          this.gravityY = 10; // Mock upside down
+          return;
+        }
+        if (event.keyText === 'r' || event.keyText === 'R') {
+          this.gravityY = -9.8; // Mock upright
+          return;
+        }
+
         // Sequential feature toggling: 1 -> 2 -> 3
         if (this.lastTriggeredFeature === 3) {
           this.triggerContextAnalysis();
