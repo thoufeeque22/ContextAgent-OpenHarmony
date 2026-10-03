@@ -9,7 +9,8 @@ struct Index {
   @State recentSummaries: string[] = [
     "System initialized. Ready for context scan."
   ];
-  @State isProcessing: boolean = false;
+  @State isProcessingContext: boolean = false;
+  @State documentState: 'idle' | 'scanning' | 'analyzing' = 'idle';
   
   // Platform context data
   @State ambientLightLevel: number = 0;
@@ -63,7 +64,7 @@ struct Index {
       // Main Action Buttons
       Column({ space: 16 }) {
         Button() {
-          Text(this.isProcessing ? "Analyzing..." : "What's Around Me?")
+          Text(this.documentState === 'idle' ? "Read Private Document" : (this.documentState === 'scanning' ? "Scanning..." : "Analyzing..."))
             .fontSize(24)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
@@ -71,25 +72,25 @@ struct Index {
         .type(ButtonType.Capsule)
         .width('100%')
         .height(100)
-        .backgroundColor(this.isProcessing ? '#8C64B4' : '#E6007E')
-        .shadow({ radius: 10, color: '#E6007E', offsetX: 0, offsetY: 5 })
-        .onClick(() => {
-          this.triggerContextAnalysis();
-        })
-
-        Button() {
-          Text(this.isProcessing ? "Scanning..." : "Read Private Document")
-            .fontSize(24)
-            .fontWeight(FontWeight.Bolder)
-            .fontColor('#FFFFFF')
-        }
-        .type(ButtonType.Capsule)
-        .width('100%')
-        .height(100)
-        .backgroundColor(this.isProcessing ? '#8C64B4' : '#02BCC1')
+        .backgroundColor(this.documentState !== 'idle' ? '#8C64B4' : '#02BCC1')
         .shadow({ radius: 10, color: '#02BCC1', offsetX: 0, offsetY: 5 })
         .onClick(() => {
           this.triggerDocumentAnalysis();
+        })
+
+        Button() {
+          Text(this.isProcessingContext ? "Analyzing..." : "What's Around Me?")
+            .fontSize(24)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor('#FFFFFF')
+        }
+        .type(ButtonType.Capsule)
+        .width('100%')
+        .height(100)
+        .backgroundColor(this.isProcessingContext ? '#8C64B4' : '#E6007E')
+        .shadow({ radius: 10, color: '#E6007E', offsetX: 0, offsetY: 5 })
+        .onClick(() => {
+          this.triggerContextAnalysis();
         })
       }
       .width('100%')
@@ -145,21 +146,23 @@ struct Index {
   }
 
   private triggerDocumentAnalysis() {
-    if (this.isProcessing) return;
-    this.isProcessing = true;
+    if (this.documentState !== 'idle') return;
+    this.documentState = 'scanning';
 
-    // Simulate native on-device OCR extraction of a sensitive document
-    let simulatedOCRText = "CONFIDENTIAL MEDICAL BILL. Patient: John Doe. Amount Due: $450.00. Due Date: October 15th.";
-    
-    // Construct the prompt for Gemma 4
-    let systemPrompt = `You are a helpful AI accessibility assistant running completely offline. The user just scanned a private document with their camera. The extracted text is: "${simulatedOCRText}". Provide a warm, concise, one-sentence auditory summary of this document for a visually impaired user. Do not leak privacy warnings, just summarize the bill.`;
+    // Simulate 1.5 seconds of "Scanning" (Local OCR extraction) before Analyzing
+    setTimeout(() => {
+      this.documentState = 'analyzing';
+      
+      let simulatedOCRText = "CONFIDENTIAL MEDICAL BILL. Patient: John Doe. Amount Due: $450.00. Due Date: October 15th.";
+      let systemPrompt = `You are a helpful AI accessibility assistant running completely offline. The user just scanned a private document with their camera. The extracted text is: "${simulatedOCRText}". Provide a warm, concise, one-sentence auditory summary of this document for a visually impaired user. Do not leak privacy warnings, just summarize the bill.`;
 
-    this.sendToGemma(systemPrompt);
+      this.sendToGemma(systemPrompt, 'document');
+    }, 1500);
   }
 
   private triggerContextAnalysis() {
-    if (this.isProcessing) return;
-    this.isProcessing = true;
+    if (this.isProcessingContext) return;
+    this.isProcessingContext = true;
 
     let environmentDescriptor = "well-lit";
     if (this.ambientLightLevel < 50) {
@@ -172,10 +175,10 @@ struct Index {
     
     let systemPrompt = `You are a helpful AI accessibility assistant. The user is visually impaired and holding a ${deviceType}. The device's physical sensors detect that the current environment is ${environmentDescriptor} (${Math.round(this.ambientLightLevel)} lux). Provide a warm, concise, one-sentence auditory description reassuring the user of their environment.`;
 
-    this.sendToGemma(systemPrompt);
+    this.sendToGemma(systemPrompt, 'context');
   }
 
-  private sendToGemma(systemPrompt: string) {
+  private sendToGemma(systemPrompt: string, source: 'context' | 'document') {
     let httpRequest = http.createHttp();
     // Use 10.0.2.2 because it is the emulator's alias for the Mac's localhost
     // NOTE: If using the Previewer instead of the Emulator, this should be 127.0.0.1
@@ -195,7 +198,12 @@ struct Index {
         connectTimeout: 30000
       },
       (err, data) => {
-        this.isProcessing = false;
+        if (source === 'context') {
+          this.isProcessingContext = false;
+        } else {
+          this.documentState = 'idle';
+        }
+        
         if (!err && data.responseCode === 200) {
           try {
             let res = JSON.parse(data.result as string) as Record<string, Object>;
