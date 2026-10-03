@@ -64,21 +64,6 @@ struct Index {
       // Main Action Buttons
       Column({ space: 16 }) {
         Button() {
-          Text(this.documentState === 'idle' ? "Read Private Document" : (this.documentState === 'scanning' ? "Scanning..." : "Analyzing..."))
-            .fontSize(24)
-            .fontWeight(FontWeight.Bolder)
-            .fontColor('#FFFFFF')
-        }
-        .type(ButtonType.Capsule)
-        .width('100%')
-        .height(100)
-        .backgroundColor(this.documentState !== 'idle' ? '#8C64B4' : '#02BCC1')
-        .shadow({ radius: 10, color: '#02BCC1', offsetX: 0, offsetY: 5 })
-        .onClick(() => {
-          this.triggerDocumentAnalysis();
-        })
-
-        Button() {
           Text(this.isProcessingContext ? "Analyzing..." : "What's Around Me?")
             .fontSize(24)
             .fontWeight(FontWeight.Bolder)
@@ -91,6 +76,21 @@ struct Index {
         .shadow({ radius: 10, color: '#E6007E', offsetX: 0, offsetY: 5 })
         .onClick(() => {
           this.triggerContextAnalysis();
+        })
+
+        Button() {
+          Text(this.documentState === 'idle' ? "Read Private Document" : (this.documentState === 'scanning' ? "Scanning..." : "Analyzing..."))
+            .fontSize(24)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor('#FFFFFF')
+        }
+        .type(ButtonType.Capsule)
+        .width('100%')
+        .height(100)
+        .backgroundColor(this.documentState !== 'idle' ? '#8C64B4' : '#02BCC1')
+        .shadow({ radius: 10, color: '#02BCC1', offsetX: 0, offsetY: 5 })
+        .onClick(() => {
+          this.triggerDocumentAnalysis();
         })
       }
       .width('100%')
