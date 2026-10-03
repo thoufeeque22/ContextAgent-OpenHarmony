@@ -60,24 +60,40 @@ struct Index {
       .padding(24)
       .backgroundColor('#110527')
 
-      // Main Context Button
-      Column() {
+      // Main Action Buttons
+      Column({ space: 16 }) {
         Button() {
           Text(this.isProcessing ? "Analyzing..." : "What's Around Me?")
-            .fontSize(28)
+            .fontSize(24)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
         }
-        .type(ButtonType.Circle)
-        .width(280)
-        .height(280)
+        .type(ButtonType.Capsule)
+        .width('100%')
+        .height(100)
         .backgroundColor(this.isProcessing ? '#8C64B4' : '#E6007E')
-        .shadow({ radius: 20, color: '#E6007E', offsetX: 0, offsetY: 10 })
+        .shadow({ radius: 10, color: '#E6007E', offsetX: 0, offsetY: 5 })
         .onClick(() => {
           this.triggerContextAnalysis();
         })
+
+        Button() {
+          Text(this.isProcessing ? "Scanning..." : "Read Private Document")
+            .fontSize(24)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor('#FFFFFF')
+        }
+        .type(ButtonType.Capsule)
+        .width('100%')
+        .height(100)
+        .backgroundColor(this.isProcessing ? '#8C64B4' : '#02BCC1')
+        .shadow({ radius: 10, color: '#02BCC1', offsetX: 0, offsetY: 5 })
+        .onClick(() => {
+          this.triggerDocumentAnalysis();
+        })
       }
       .width('100%')
+      .padding({ left: 24, right: 24, top: 12, bottom: 12 })
       .layoutWeight(1)
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
@@ -128,6 +144,19 @@ struct Index {
     .backgroundColor('#020205')
   }
 
+  private triggerDocumentAnalysis() {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+
+    // Simulate native on-device OCR extraction of a sensitive document
+    let simulatedOCRText = "CONFIDENTIAL MEDICAL BILL. Patient: John Doe. Amount Due: $450.00. Due Date: October 15th.";
+    
+    // Construct the prompt for Gemma 4
+    let systemPrompt = `You are a helpful AI accessibility assistant running completely offline. The user just scanned a private document with their camera. The extracted text is: "${simulatedOCRText}". Provide a warm, concise, one-sentence auditory summary of this document for a visually impaired user. Do not leak privacy warnings, just summarize the bill.`;
+
+    this.sendToGemma(systemPrompt);
+  }
+
   private triggerContextAnalysis() {
     if (this.isProcessing) return;
     this.isProcessing = true;
@@ -141,9 +170,12 @@ struct Index {
 
     let deviceType = deviceInfo.deviceType ? deviceInfo.deviceType : "smart device";
     
-    // Construct the prompt for Gemma 4
     let systemPrompt = `You are a helpful AI accessibility assistant. The user is visually impaired and holding a ${deviceType}. The device's physical sensors detect that the current environment is ${environmentDescriptor} (${Math.round(this.ambientLightLevel)} lux). Provide a warm, concise, one-sentence auditory description reassuring the user of their environment.`;
 
+    this.sendToGemma(systemPrompt);
+  }
+
+  private sendToGemma(systemPrompt: string) {
     let httpRequest = http.createHttp();
     // Use 10.0.2.2 because it is the emulator's alias for the Mac's localhost
     // NOTE: If using the Previewer instead of the Emulator, this should be 127.0.0.1
