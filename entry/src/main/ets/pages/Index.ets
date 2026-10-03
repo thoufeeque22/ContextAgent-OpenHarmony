@@ -109,13 +109,14 @@ struct Index {
                   .padding(16)
                   .layoutWeight(1)
               }
+              .width('100%')
               .backgroundColor('#2A1A4A')
               .borderRadius(12)
-              .margin({ left: 24, right: 24 })
             }
           })
         }
         .width('100%')
+        .padding({ left: 24, right: 24, bottom: 24 })
         .layoutWeight(1)
       }
       .width('100%')
