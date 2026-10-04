@@ -25,6 +25,8 @@ In accordance with HackYeah Challenge Rules (Section 4), we disclose the use of 
 *   **Hardware APIs:** `@ohos.sensor` (Accelerometer, AmbientLight)
 *   **AI Assistance:** An AI coding assistant was utilized to help rapidly prototype the ArkTS boilerplate and UI styling during the 24-hour hackathon.
 
+> **Note on Text-to-Speech (TTS):** For the purpose of this visual hackathon demonstration, the agent's auditory responses are printed to the on-screen Activity Log so judges can easily read the AI's reasoning. In a production deployment, this text stream is routed directly to OpenHarmony's native `textToSpeech` API.
+
 ## 🚀 How to Run (Development)
 
 1. Clone this repository.
