@@ -159,6 +159,10 @@ struct Index {
           .fontColor('#02BCC1')
       }
       .padding({ bottom: 10 })
+      .onClick(() => {
+        // HACKATHON TRICK 2: Secretly tap the debug text to flip gravity for the demo!
+        this.gravityY = this.gravityY > 0 ? -9.8 : 10;
+      })
 
       // Live AI Toggle
       Row() {
@@ -173,10 +177,6 @@ struct Index {
           .fontColor('#AAAAAA')
       }
       .padding({ bottom: 20 })
-      .onClick(() => {
-        // HACKATHON TRICK 2: Secretly tap the debug text to flip gravity for the demo!
-        this.gravityY = this.gravityY > 0 ? -9.8 : 10;
-      })
 
       // Recent Summaries List
       Column() {
