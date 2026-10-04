@@ -349,7 +349,7 @@ struct Index {
       setTimeout(() => {
         let responseText = "";
         if (source === 'context') {
-          responseText = this.gravityY > 5 ? "Warning: Your phone is currently upside down." : "You are in a normally lit room, holding your phone upright.";
+          responseText = this.gravityY > 5 ? "You are in a normally lit room, but warning: your phone is currently upside down." : "You are in a normally lit room, holding your phone upright.";
           this.isProcessingContext = false;
         } else if (source === 'screen') {
           responseText = "You are on the Bank Pekao dashboard. Your balance is 12,450 PLN and you can start a transfer.";
