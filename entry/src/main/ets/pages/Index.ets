@@ -17,7 +17,7 @@ struct Index {
   
   // Platform context data
   @State ambientLightLevel: number = 0;
-  @State @Watch('onGravityChange') gravityY: number = -9.8;
+  @State @Watch('onGravityChange') gravityY: number = 10;
   @State gravityZ: number = 0;
 
   aboutToAppear() {
