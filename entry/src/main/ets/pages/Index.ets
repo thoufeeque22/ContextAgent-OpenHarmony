@@ -88,21 +88,6 @@ struct Index {
       // Main Action Buttons
       Column({ space: 10 }) {
         Button() {
-          Text(this.isProcessingContext ? "Analyzing..." : "What's Around Me?")
-            .fontSize(20)
-            .fontWeight(FontWeight.Bolder)
-            .fontColor('#FFFFFF')
-        }
-        .type(ButtonType.Capsule)
-        .width('100%')
-        .height(70)
-        .backgroundColor(this.isProcessingContext ? '#8C64B4' : '#E6007E')
-        .shadow({ radius: 8, color: '#E6007E', offsetX: 0, offsetY: 4 })
-        .onClick(() => {
-          this.triggerContextAnalysis();
-        })
-
-        Button() {
           Text(this.screenState === 'idle' ? "Summarize Screen" : (this.screenState === 'scanning' ? "Reading UI..." : "Analyzing..."))
             .fontSize(20)
             .fontWeight(FontWeight.Bolder)
@@ -115,6 +100,21 @@ struct Index {
         .shadow({ radius: 8, color: '#FF9900', offsetX: 0, offsetY: 4 })
         .onClick(() => {
           this.triggerScreenAnalysis();
+        })
+
+        Button() {
+          Text(this.actionState === 'idle' ? "Execute Action" : (this.actionState === 'scanning' ? "Planning..." : "Executing..."))
+            .fontSize(20)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor('#FFFFFF')
+        }
+        .type(ButtonType.Capsule)
+        .width('100%')
+        .height(70)
+        .backgroundColor(this.actionState !== 'idle' ? '#8C64B4' : '#32CD32')
+        .shadow({ radius: 8, color: '#32CD32', offsetX: 0, offsetY: 4 })
+        .onClick(() => {
+          this.triggerActionExecution();
         })
 
         Button() {
@@ -133,7 +133,7 @@ struct Index {
         })
 
         Button() {
-          Text(this.actionState === 'idle' ? "Execute Action" : (this.actionState === 'scanning' ? "Planning..." : "Executing..."))
+          Text(this.isProcessingContext ? "Analyzing..." : "What's Around Me?")
             .fontSize(20)
             .fontWeight(FontWeight.Bolder)
             .fontColor('#FFFFFF')
@@ -141,10 +141,10 @@ struct Index {
         .type(ButtonType.Capsule)
         .width('100%')
         .height(70)
-        .backgroundColor(this.actionState !== 'idle' ? '#8C64B4' : '#32CD32')
-        .shadow({ radius: 8, color: '#32CD32', offsetX: 0, offsetY: 4 })
+        .backgroundColor(this.isProcessingContext ? '#8C64B4' : '#E6007E')
+        .shadow({ radius: 8, color: '#E6007E', offsetX: 0, offsetY: 4 })
         .onClick(() => {
-          this.triggerActionExecution();
+          this.triggerContextAnalysis();
         })
       }
       .width('100%')
@@ -229,17 +229,17 @@ struct Index {
           return;
         }
 
-        // Map the physical '1', '2', and '3' keys to specific features using raw KeyCodes!
+        // Map the physical '1', '2', '3', and '4' keys to specific features using raw KeyCodes!
         // We check OpenHarmony, Android, and ASCII codes just to be absolutely certain.
         let code = event.keyCode;
         if (code === 2001 || code === 8 || code === 49) {
-          this.triggerContextAnalysis();
-        } else if (code === 2002 || code === 9 || code === 50) {
           this.triggerScreenAnalysis();
+        } else if (code === 2002 || code === 9 || code === 50) {
+          this.triggerActionExecution();
         } else if (code === 2003 || code === 10 || code === 51) {
           this.triggerDocumentAnalysis();
         } else if (code === 2004 || code === 11 || code === 52) {
-          this.triggerActionExecution();
+          this.triggerContextAnalysis();
         }
       }
     })
