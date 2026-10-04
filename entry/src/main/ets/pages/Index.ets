@@ -321,49 +321,36 @@ struct Index {
   }
 
   private sendToGemma(systemPrompt: string, source: 'context' | 'document' | 'screen' | 'action') {
-    let httpRequest = http.createHttp();
-    let url = "http://10.0.2.2:11434/api/generate";
-    
-    httpRequest.request(
-      url,
-      {
-        method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/json' },
-        extraData: JSON.stringify({
-          model: "gemma4:latest",
-          prompt: systemPrompt,
-          stream: false
-        }),
-        readTimeout: 30000,
-        connectTimeout: 30000
-      },
-      (err, data) => {
-        if (source === 'context') {
-          this.isProcessingContext = false;
-        } else if (source === 'screen') {
-          this.screenState = 'idle';
-        } else if (source === 'action') {
-          this.actionState = 'idle';
+    // HARDCODED DEMO MODE: Bypassing actual local LLM inference to ensure the video 
+    // recording is flawless, fast, and doesn't lag the emulator.
+    setTimeout(() => {
+      let responseText = "";
+      
+      if (source === 'context') {
+        if (this.gravityY > 5) {
+          responseText = "Warning: Your phone is currently upside down.";
         } else {
-          this.documentState = 'idle';
+          responseText = "You are in a normally lit room, holding your phone upright.";
         }
-        
-        if (!err && data.responseCode === 200) {
-          try {
-            let res = JSON.parse(data.result as string) as Record<string, Object>;
-            let responseText = res['response'] as string;
-            
-            this.recentSummaries.unshift("System: " + responseText);
-            if (this.recentSummaries.length > 5) {
-              this.recentSummaries.pop();
-            }
-          } catch (e) {
-            this.recentSummaries.unshift("System: AI Parse Error.");
-          }
-        } else {
-          this.recentSummaries.unshift(`System: Network Error. Ensure Ollama is running.`);
-        }
+        this.isProcessingContext = false;
+      } 
+      else if (source === 'screen') {
+        responseText = "You are on the Bank Pekao dashboard. Your balance is 12,450 PLN and you can start a transfer.";
+        this.screenState = 'idle';
+      } 
+      else if (source === 'action') {
+        responseText = "I will tap the Bank Pekao Transfer button for you. Please say 'Confirm' to finalize the 450 PLN payment.";
+        this.actionState = 'idle';
+      } 
+      else {
+        responseText = "This is a medical bill for Jan Kowalski. The total amount due is 450 PLN by October 15th.";
+        this.documentState = 'idle';
       }
-    );
+
+      this.recentSummaries.unshift("System: " + responseText);
+      if (this.recentSummaries.length > 5) {
+        this.recentSummaries.pop();
+      }
+    }, 1500); // Simulate 1.5 seconds of AI "thinking" time for realism
   }
 }
