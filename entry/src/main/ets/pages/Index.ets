@@ -13,11 +13,11 @@ struct Index {
   @State documentState: 'idle' | 'scanning' | 'analyzing' = 'idle';
   @State screenState: 'idle' | 'scanning' | 'analyzing' = 'idle';
   @State actionState: 'idle' | 'scanning' | 'analyzing' = 'idle';
-  @State isLiveAI: boolean = false;
+  @State isLiveAI: boolean = true;
   
   // Platform context data
   @State ambientLightLevel: number = 0;
-  @State @Watch('onGravityChange') gravityY: number = 10;
+  @State @Watch('onGravityChange') gravityY: number = -9.8;
   @State gravityZ: number = 0;
 
   aboutToAppear() {
