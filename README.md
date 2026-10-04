@@ -10,7 +10,7 @@ ContextAgent bridges the gap between the digital and physical worlds while maint
 
 ## ✨ Key Features (Designed for the Huawei Challenge)
 
-1. **Digital Context (Bank Pekao Integration):** Instead of reading a UI tree line-by-line, the agent naturally summarizes complex screens. (e.g., *"You are on the Bank Pekao dashboard, your balance is 12,450 PLN"*).
+1. **Digital Context (Bank Pekao Integration):** Instead of reading the screen line-by-line, the agent naturally summarizes complex interfaces. (e.g., *"You are on the Bank Pekao dashboard, your balance is 12,450 PLN"*).
 2. **Agentic Action:** The AI doesn't just read—it securely acts. It uses a conversational state machine to acknowledge voice requests, identify the correct UI buttons (like "Transfer"), and request final voice confirmation before executing a financial action.
 3. **Physical Hardware Awareness (`@ohos.sensor`):** ContextAgent integrates natively with the device's Accelerometer and Ambient Light sensors. If a visually impaired user drops or holds their device upside down, the OS-level sensor detects the gravity shift and the agent instantly issues an auditory warning.
 4. **Privacy-First Document Scanning:** Scans highly sensitive physical documents (like medical bills) using offline OCR and summarizes them locally. Zero cloud data leaks.
